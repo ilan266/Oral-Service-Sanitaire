@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Service Sanitaire — Ilan Daien</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background: #0d0a1a;
+    color: #fff;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Halos colorés flous animés (aurora) */
+  .aurora {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    overflow: hidden;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.5;
+    animation: float 20s infinite ease-in-out;
+  }
+  .blob:nth-child(1) {
+    width: 500px; height: 500px;
+    background: #ff4d8d;
+    top: -100px; left: -100px;
+    animation-delay: 0s;
+  }
+  .blob:nth-child(2) {
+    width: 450px; height: 450px;
+    background: #9b51e0;
+    top: 30%; right: -150px;
+    animation-delay: -5s;
+  }
+  .blob:nth-child(3) {
+    width: 400px; height: 400px;
+    background: #ff8a3d;
+    bottom: -100px; left: 30%;
+    animation-delay: -10s;
+  }
+  .blob:nth-child(4) {
+    width: 350px; height: 350px;
+    background: #2dd4bf;
+    top: 50%; left: 20%;
+    animation-delay: -15s;
+  }
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(80px, -50px) scale(1.1); }
+    50% { transform: translate(-50px, 70px) scale(0.95); }
+    75% { transform: translate(40px, 30px) scale(1.05); }
+  }
+
+  /* Header */
+  .header {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 30px 20px 10px;
+  }
+  .header h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(90deg, #ff4d8d, #ff8a3d, #ffd166);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+  .header p {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.7);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .instruction {
+    margin-top: 14px;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.5);
+    font-style: italic;
+  }
+
+  /* Carte mentale */
+  .mindmap-container {
+    position: relative;
+    width: 100%;
+    height: 75vh;
+    min-height: 600px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+  }
+
+  .mindmap {
+    position: relative;
+    width: 900px;
+    height: 600px;
+    max-width: 95vw;
+  }
+
+  /* SVG des lignes - correctement aligné */
+  .lines {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .line-path {
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    opacity: 0.7;
+  }
+
+  /* Nœud central — forme hexagonale stylisée */
+  .center-node {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 220px; height: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    text-align: center;
+    padding: 20px;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    background: linear-gradient(135deg, rgba(255, 77, 141, 0.9), rgba(155, 81, 224, 0.9));
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 0 60px rgba(255, 77, 141, 0.4);
+    animation: gentle-pulse 4s infinite ease-in-out;
+  }
+  .center-node:hover {
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+  @keyframes gentle-pulse {
+    0%, 100% { box-shadow: 0 0 60px rgba(255, 77, 141, 0.4); }
+    50% { box-shadow: 0 0 90px rgba(155, 81, 224, 0.6); }
+  }
+  .center-node .label {
+    font-size: 1.4rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+  .center-node .sub {
+    font-size: 0.72rem;
+    opacity: 0.95;
+    line-height: 1.5;
+    letter-spacing: 0.5px;
+  }
+
+  /* Branches — hexagones glassmorphism */
+  .branch {
+    position: absolute;
+    width: 175px; height: 175px;
+    cursor: pointer;
+    z-index: 5;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px 14px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  }
+  .branch:hover {
+    transform: scale(1.1);
+  }
+  .branch .number {
+    display: inline-block;
+    width: 32px; height: 32px;
+    line-height: 30px;
+    color: #fff;
+    border-radius: 50%;
+    font-weight: 900;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+    transition: all 0.3s ease;
+    border: 2px solid rgba(255,255,255,0.5);
+  }
+  .branch .icon {
+    font-size: 1.7rem;
+    margin-bottom: 5px;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+  }
+  .branch .title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    line-height: 1.25;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  }
+  .branch.visited {
+    background: rgba(45, 212, 191, 0.15);
+    border-color: rgba(45, 212, 191, 0.5);
+  }
+  .branch.visited .number {
+    background: #2dd4bf;
+    border-color: #fff;
+  }
+
+  /* Couleurs par branche */
+  .branch-1 .number { background: #ff4d8d; }
+  .branch-2 .number { background: #ff8a3d; }
+  .branch-3 .number { background: #ffd166; color: #333; }
+  .branch-4 .number { background: #2dd4bf; }
+  .branch-5 .number { background: #4d9aff; }
+  .branch-6 .number { background: #9b51e0; }
+
+  .branch-1:hover { box-shadow: 0 0 40px rgba(255, 77, 141, 0.5); }
+  .branch-2:hover { box-shadow: 0 0 40px rgba(255, 138, 61, 0.5); }
+  .branch-3:hover { box-shadow: 0 0 40px rgba(255, 209, 102, 0.5); }
+  .branch-4:hover { box-shadow: 0 0 40px rgba(45, 212, 191, 0.5); }
+  .branch-5:hover { box-shadow: 0 0 40px rgba(77, 154, 255, 0.5); }
+  .branch-6:hover { box-shadow: 0 0 40px rgba(155, 81, 224, 0.5); }
+
+  /* Positions hexagonales autour du centre */
+  /* Centre est en (450, 300). Rayon ~280px */
+  /* 6 branches disposées à 60° d'écart, en partant du haut */
+  .branch-1 { top: 30px; left: 362px; }       /* haut-centre */
+  .branch-2 { top: 130px; right: 50px; }      /* haut-droite */
+  .branch-3 { bottom: 130px; right: 50px; }   /* bas-droite */
+  .branch-4 { bottom: 30px; left: 362px; }    /* bas-centre */
+  .branch-5 { bottom: 130px; left: 50px; }    /* bas-gauche */
+  .branch-6 { top: 130px; left: 50px; }       /* haut-gauche */
+
+  /* Modal / Panneau */
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(13, 10, 26, 0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    animation: fadeIn 0.3s ease;
+  }
+  .modal-overlay.active { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .modal {
+    background: linear-gradient(145deg, rgba(40, 30, 70, 0.95), rgba(20, 15, 35, 0.95));
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    border-radius: 24px;
+    padding: 35px 40px;
+    max-width: 850px;
+    width: 92%;
+    max-height: 88vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 20px 80px rgba(0,0,0,0.6);
+    animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes slideUp {
+    from { transform: translateY(40px) scale(0.95); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 18px; right: 18px;
+    width: 42px; height: 42px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    color: #fff;
+    font-size: 1.4rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-close:hover {
+    background: rgba(255, 77, 141, 0.4);
+    transform: rotate(90deg);
+  }
+
+  .modal h2 {
+    font-size: 1.9rem;
+    margin-bottom: 8px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    background: linear-gradient(90deg, #ff4d8d, #ff8a3d, #ffd166);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .modal .subtitle {
+    color: rgba(255,255,255,0.6);
+    font-style: italic;
+    margin-bottom: 28px;
+    font-size: 0.98rem;
+  }
+
+  .modal-section {
+    margin-bottom: 24px;
+    padding: 20px 22px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 14px;
+    border-left: 3px solid #ff4d8d;
+    transition: background 0.3s ease;
+  }
+  .modal-section:hover {
+    background: rgba(255, 255, 255, 0.07);
+  }
+  .modal-section h3 {
+    color: #fff;
+    font-size: 1.05rem;
+    margin-bottom: 12px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .modal-section ul {
+    list-style: none;
+    padding-left: 0;
+  }
+  .modal-section li {
+    color: rgba(255,255,255,0.85);
+    padding: 7px 0;
+    padding-left: 22px;
+    position: relative;
+    line-height: 1.55;
+    font-size: 0.95rem;
+  }
+  .modal-section li::before {
+    content: '●';
+    color: #ff8a3d;
+    position: absolute;
+    left: 0;
+    top: 7px;
+    font-size: 0.7rem;
+  }
+  .modal-section li strong {
+    color: #fff;
+    background: linear-gradient(90deg, rgba(255, 77, 141, 0.25), rgba(255, 138, 61, 0.25));
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+  .modal-section .quote {
+    color: #ffd166;
+    font-style: italic;
+    padding: 14px 18px;
+    background: rgba(255, 209, 102, 0.08);
+    border-radius: 10px;
+    margin: 14px 0 6px;
+    border-left: 3px solid #ffd166;
+    font-size: 0.98rem;
+    line-height: 1.6;
+  }
+
+  /* Section coloration par branche */
+  .modal[data-branch="1"] .modal-section { border-left-color: #ff4d8d; }
+  .modal[data-branch="2"] .modal-section { border-left-color: #ff8a3d; }
+  .modal[data-branch="3"] .modal-section { border-left-color: #ffd166; }
+  .modal[data-branch="4"] .modal-section { border-left-color: #2dd4bf; }
+  .modal[data-branch="5"] .modal-section { border-left-color: #4d9aff; }
+  .modal[data-branch="6"] .modal-section { border-left-color: #9b51e0; }
+
+  /* Devinette */
+  .riddle-content {
+    text-align: center;
+    padding: 20px 0;
+  }
+  .riddle-question {
+    font-size: 1.15rem;
+    line-height: 1.85;
+    color: #fff;
+    padding: 28px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 16px;
+    margin-bottom: 28px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .riddle-reveal-btn {
+    background: linear-gradient(135deg, #ff4d8d, #9b51e0);
+    color: #fff;
+    border: none;
+    padding: 16px 44px;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 6px 25px rgba(255, 77, 141, 0.4);
+  }
+  .riddle-reveal-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 35px rgba(255, 77, 141, 0.6);
+  }
+  .riddle-answer {
+    display: none;
+    margin-top: 35px;
+    animation: fadeIn 0.6s ease;
+  }
+  .riddle-answer.visible { display: block; }
+  .riddle-word {
+    font-size: 4.5rem;
+    font-weight: 900;
+    background: linear-gradient(90deg, #ff4d8d, #ff8a3d, #ffd166, #2dd4bf);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 10px;
+    margin-bottom: 20px;
+    animation: shimmer 3s linear infinite;
+    background-size: 200% auto;
+  }
+  @keyframes shimmer {
+    to { background-position: 200% center; }
+  }
+  .riddle-final {
+    color: #fff;
+    font-size: 1.05rem;
+    line-height: 1.75;
+    max-width: 620px;
+    margin: 0 auto;
+    font-style: italic;
+  }
+  .riddle-final .merci {
+    display: block;
+    margin-top: 18px;
+    font-size: 1.4rem;
+    font-weight: 900;
+    font-style: normal;
+    letter-spacing: 4px;
+    background: linear-gradient(90deg, #ff4d8d, #9b51e0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Progress bar */
+  .progress {
+    position: fixed;
+    bottom: 0; left: 0;
+    width: 100%;
+    height: 4px;
+    background: rgba(255,255,255,0.08);
+    z-index: 50;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #ff4d8d, #ff8a3d, #ffd166, #2dd4bf, #4d9aff, #9b51e0);
+    width: 0%;
+    transition: width 0.6s ease;
+  }
+  .progress-text {
+    position: fixed;
+    bottom: 14px;
+    right: 22px;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.6);
+    z-index: 50;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .mindmap { height: 700px; }
+    .center-node { width: 150px; height: 150px; }
+    .center-node .label { font-size: 1rem; }
+    .center-node .sub { font-size: 0.6rem; }
+    .branch { width: 120px; height: 120px; padding: 12px 8px; }
+    .branch .title { font-size: 0.65rem; }
+    .branch .icon { font-size: 1.2rem; }
+    .branch .number { width: 24px; height: 24px; line-height: 22px; font-size: 0.8rem; }
+    /* Repositionnement mobile */
+    .branch-1 { top: 30px; left: 50%; transform: translateX(-50%); }
+    .branch-2 { top: 130px; right: 5px; }
+    .branch-3 { bottom: 130px; right: 5px; }
+    .branch-4 { bottom: 30px; left: 50%; transform: translateX(-50%); }
+    .branch-5 { bottom: 130px; left: 5px; }
+    .branch-6 { top: 130px; left: 5px; }
+    .header h1 { font-size: 1.4rem; }
+    .modal { padding: 25px 22px; }
+    .modal h2 { font-size: 1.3rem; }
+    .riddle-word { font-size: 2.8rem; letter-spacing: 5px; }
+    .lines { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="aurora">
+  <div class="blob"></div>
+  <div class="blob"></div>
+  <div class="blob"></div>
+  <div class="blob"></div>
+</div>
+
+<div class="header">
+  <h1>SERVICE SANITAIRE — UNE ANTHOLOGIE</h1>
+  <p>Ilan Daien • IMFSI Perpignan • Promo Marie-Ange Coudray</p>
+  <p class="instruction">📍 Suivez le parcours 1 → 2 → 3 → 4 → 5 → 6</p>
+</div>
+
+<div class="mindmap-container">
+  <div class="mindmap">
+
+    <!-- SVG des lignes de connexion -->
+    <svg class="lines" viewBox="0 0 900 600">
+      <defs>
+        <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#ff4d8d" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="#ff4d8d" stop-opacity="0.2"/>
+        </linearGradient>
+        <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#ff8a3d" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="#ff8a3d" stop-opacity="0.2"/>
+        </linearGradient>
+        <linearGradient id="g3" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#ffd166" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="#ffd166" stop-opacity="0.2"/>
+        </linearGradient>
+        <linearGradient id="g4" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#2dd4bf" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="#2dd4bf" stop-opacity="0.2"/>
+        </linearGradient>
+        <linearGradient id="g5" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#4d9aff" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="#4d9aff" stop-opacity="0.2"/>
+        </linearGradient>
+        <linearGradient id="g6" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#9b51e0" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="#9b51e0" stop-opacity="0.2"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Lignes du centre (450,300) vers chaque branche (centre de chaque hex) -->
+      <!-- Branch 1 : top 30, left 362, taille 175 → centre (449, 117) -->
+      <path class="line-path" d="M 450 300 Q 450 200 449 117" stroke="url(#g1)"/>
+      <!-- Branch 2 : top 130, right 50 (= left 675), taille 175 → centre (762, 217) -->
+      <path class="line-path" d="M 450 300 Q 600 250 762 217" stroke="url(#g2)"/>
+      <!-- Branch 3 : bottom 130 (= top 295), right 50 → centre (762, 382) -->
+      <path class="line-path" d="M 450 300 Q 600 340 762 382" stroke="url(#g3)"/>
+      <!-- Branch 4 : bottom 30 (= top 395), left 362 → centre (449, 482) -->
+      <path class="line-path" d="M 450 300 Q 450 400 449 482" stroke="url(#g4)"/>
+      <!-- Branch 5 : bottom 130, left 50 → centre (137, 382) -->
+      <path class="line-path" d="M 450 300 Q 300 340 137 382" stroke="url(#g5)"/>
+      <!-- Branch 6 : top 130, left 50 → centre (137, 217) -->
+      <path class="line-path" d="M 450 300 Q 300 250 137 217" stroke="url(#g6)"/>
+    </svg>
+
+    <!-- Nœud central -->
+    <div class="center-node" onclick="openModal('center')">
+      <div class="label">EVARS</div>
+      <div class="sub">Consentement<br>Pression du groupe<br>Relations ados</div>
+    </div>
+
+    <!-- Branches (numéros suivent le sens horaire en partant du haut) -->
+    <div class="branch branch-1" id="b1" onclick="openModal('contexte', 1)">
+      <div class="number">1</div>
+      <div class="icon">🏫</div>
+      <div class="title">Contexte<br>& Public</div>
+    </div>
+
+    <div class="branch branch-2" id="b2" onclick="openModal('diagnostic', 2)">
+      <div class="number">2</div>
+      <div class="icon">🔍</div>
+      <div class="title">Diagnostic<br>& Besoins</div>
+    </div>
+
+    <div class="branch branch-3" id="b3" onclick="openModal('preparation', 3)">
+      <div class="number">3</div>
+      <div class="icon">🎬</div>
+      <div class="title">Préparation<br>& Ateliers</div>
+    </div>
+
+    <div class="branch branch-4" id="b4" onclick="openModal('jourj', 4)">
+      <div class="number">4</div>
+      <div class="icon">⚡</div>
+      <div class="title">Le Jour J<br>& Imprévus</div>
+    </div>
+
+    <div class="branch branch-5" id="b5" onclick="openModal('analyse', 5)">
+      <div class="number">5</div>
+      <div class="icon">🧠</div>
+      <div class="title">Mon Analyse<br>Perso</div>
+    </div>
+
+    <div class="branch branch-6" id="b6" onclick="openModal('devinette', 6)">
+      <div class="number">6</div>
+      <div class="icon">🎯</div>
+      <div class="title">Devinette<br>Finale</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="progress">
+  <div class="progress-bar" id="progressBar"></div>
+</div>
+<div class="progress-text" id="progressText">0 / 6 explorés</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+  const content = {
+    center: {
+      title: "EVARS — Le cœur du projet",
+      subtitle: "Éducation à la Vie Affective, Relationnelle et Sexuelle",
+      sections: [
+        {
+          h3: "Pourquoi ce thème ?",
+          items: [
+            "Émergence directe de l'observation et du questionnaire menés auprès des élèves",
+            "Croisement de <strong>5 besoins de santé</strong> identifiés sur le terrain",
+            "Sujet au cœur des recommandations actuelles (circulaire Éducation nationale 2025)",
+            "Public adolescent particulièrement vulnérable et concerné"
+          ]
+        },
+        {
+          h3: "3 axes principaux",
+          items: [
+            "<strong>Le consentement</strong> : libre, clair, réversible",
+            "<strong>La pression du groupe</strong> : reconnaître les situations à risque",
+            "<strong>Les relations entre ados</strong> : poser et respecter des limites"
+          ]
+        }
+      ]
+    },
+
+    contexte: {
+      title: "1 • Contexte & Public",
+      subtitle: "Lycée Aristide Maillol, Perpignan — Mars 2026",
+      sections: [
+        {
+          h3: "Cadre institutionnel",
+          items: [
+            "<strong>Service Sanitaire</strong> obligatoire pour les étudiants paramédicaux",
+            "Formation : <strong>IMFSI Perpignan</strong>, promotion Marie-Ange Coudray 2024-2027",
+            "<strong>Groupe 21</strong> : 5 infirmiers + 1 kinésithérapeute (Loris)",
+            "Deux temps : observation/diagnostic en novembre 2025, intervention le 16 mars 2026"
+          ]
+        },
+        {
+          h3: "Le lieu",
+          items: [
+            "Lycée <strong>Aristide Maillol</strong>, Perpignan",
+            "Quartier prioritaire au sens de l'INSEE",
+            "Classe de <strong>prépa-seconde</strong> (dispositif relancé en 2025)",
+            "Public visant les élèves arrivant en seconde sans le brevet"
+          ]
+        },
+        {
+          h3: "Le public",
+          items: [
+            "<strong>17 adolescents</strong> de 15-16 ans",
+            "<strong>11 filles • 4 garçons</strong>",
+            "Issus de milieux modestes ou fragilisés",
+            "Cumul fréquent : difficultés scolaires + sociales + relationnelles"
+          ]
+        },
+        {
+          h3: "L'équipe d'encadrement",
+          items: [
+            "Notre formatrice de l'IFSI",
+            "L'infirmière scolaire (restée dans un groupe toute la séance)",
+            "À noter : Gianni a quitté la formation avant l'intervention → nous étions 5 sur place"
+          ]
+        }
+      ]
+    },
+
+    diagnostic: {
+      title: "2 • Diagnostic & Besoins",
+      subtitle: "Ce que l'observation et le questionnaire ont révélé",
+      sections: [
+        {
+          h3: "Observation de terrain (novembre 2025)",
+          items: [
+            "Classe agitée : téléphones permanents, déplacements, somnolence",
+            "Usage régulier de la <strong>puff</strong> dans l'établissement",
+            "Rapport tendu à l'autorité : provocations, contestations",
+            "<strong>Faible estime de soi collective</strong>"
+          ]
+        },
+        {
+          h3: "La phrase qui m'a marqué",
+          items: [],
+          quote: "« Vous avez choisi la pire classe, on va tous redoubler de toute façon. »"
+        },
+        {
+          h3: "Outil d'enquête : le questionnaire",
+          items: [
+            "<strong>Anonyme</strong>, 12 questions, distribué aux 17 élèves",
+            "Format choisi pour : la sincérité, l'absence de jugement, l'adaptation à un public en difficulté à l'oral",
+            "Question ouverte sur la définition du consentement + questions fermées sur les représentations"
+          ]
+        },
+        {
+          h3: "Les 5 besoins de santé identifiés",
+          items: [
+            "Compréhension du <strong>consentement</strong> (clair, libre, réversible)",
+            "Renforcement des <strong>compétences émotionnelles</strong>",
+            "<strong>Affirmation de soi</strong> face au groupe",
+            "Soutien à <strong>l'estime de soi</strong>",
+            "Amélioration du <strong>climat scolaire</strong>"
+          ]
+        },
+        {
+          h3: "→ La problématique centrale qui en émerge",
+          items: [
+            "L'<strong>EVARS</strong> : Éducation à la Vie Affective, Relationnelle et Sexuelle",
+            "Focus sur 3 axes : consentement, pression du groupe, relations entre ados"
+          ]
+        }
+      ]
+    },
+
+    preparation: {
+      title: "3 • Préparation & Ateliers",
+      subtitle: "Comment nous avons conçu l'intervention",
+      sections: [
+        {
+          h3: "Les 3 objectifs pédagogiques fixés",
+          items: [
+            "<strong>Identifier</strong> ce qu'est un consentement libre, clair et réversible",
+            "<strong>Reconnaître</strong> les situations de pression du groupe",
+            "<strong>Savoir poser et respecter</strong> des limites dans une relation"
+          ]
+        },
+        {
+          h3: "Choix pédagogique fort : 3 ateliers tournants",
+          items: [
+            "Petits groupes pour favoriser la <strong>circulation de la parole</strong>",
+            "Approche <strong>socio-constructiviste</strong> : faire émerger les représentations",
+            "Pas de transmission descendante (qui aurait été un mur sur ce public)",
+            "<strong>Ce sont les animateurs qui tournent</strong>, pas les élèves → limite le bruit et l'agitation"
+          ]
+        },
+        {
+          h3: "🟦 Atelier 1 — Phrases à compléter",
+          items: [
+            "<strong>Animé par Paolo et moi</strong>",
+            "10 débuts de phrase à compléter par écrit puis débat",
+            "Exemples : « Le consentement, c'est quand… », « Avant de toucher quelqu'un, il faut… »",
+            "Objectif : faire émerger les <strong>idées reçues</strong> et clarifier collectivement"
+          ]
+        },
+        {
+          h3: "🟨 Atelier 2 — Tenues & situations",
+          items: [
+            "<strong>Animé par Galdric et Loris</strong>",
+            "Travail sur les <strong>tenues vestimentaires</strong> associées à des situations",
+            "Exemple : robe de soirée à l'école / costume en boîte de nuit",
+            "Objectif : déconstruire l'idée qu'une tenue induirait un consentement implicite"
+          ]
+        },
+        {
+          h3: "🟥 Atelier 3 — Mises en situation",
+          items: [
+            "<strong>Animé par Maxime, en solo</strong>",
+            "Présentation de situations concrètes, ouverture au débat",
+            "Objectif : confronter les élèves à des scénarios réalistes"
+          ]
+        },
+        {
+          h3: "Conclusion prévue (avant les imprévus)",
+          items: [
+            "3 vidéos à projeter à la <strong>classe entière</strong>",
+            "Dont une scène de la série <strong>Sex Education</strong> sur le consentement",
+            "→ Ce dispositif n'a pas pu être tenu, voir Jour J"
+          ]
+        }
+      ]
+    },
+
+    jourj: {
+      title: "4 • Le Jour J & ses 3 Plot Twists",
+      subtitle: "16 mars 2026 — 9h00",
+      sections: [
+        {
+          h3: "Mise en place : ce qui était prévu",
+          items: [
+            "Arrivée à 8h30, RDV à 9h",
+            "Présentation collective des 3 ateliers par moi-même",
+            "3 îlots dans la salle, rotation des animateurs",
+            "Conclusion collective avec projection des 3 vidéos"
+          ]
+        },
+        {
+          h3: "⚡ Plot Twist 1 — La salle",
+          items: [
+            "Salle réservée = <strong>laboratoire de TP de chimie</strong>, totalement inadapté",
+            "Déplacement vers une autre salle « avec plein de tables partout »",
+            "<strong>Réajustement à chaud</strong> : réorganisation du mobilier pour créer 3 îlots distincts"
+          ]
+        },
+        {
+          h3: "⚡ Plot Twist 2 — Le câble HDMI",
+          items: [
+            "Lors de la visite préparatoire, le matériel nous avait été garanti",
+            "Le jour J : <strong>aucun câble disponible</strong>",
+            "Conséquence : impossible de projeter les vidéos en conclusion collective",
+            "<strong>Réajustement</strong> : chaque atelier a montré sa propre vidéo en clôture sur l'ordinateur de l'animateur",
+            "<strong>Point d'amélioration identifié</strong> : apporter notre propre câble même quand le matériel est garanti"
+          ]
+        },
+        {
+          h3: "⚡ Plot Twist 3 — La gestion du temps",
+          items: [
+            "Loris devait passer voir chaque atelier pour annoncer les 3 minutes restantes",
+            "Il n'y a pas pensé car trop impliqué dans son atelier avec Galdric",
+            "<strong>Mon initiative</strong> : proposer à Galdric de prendre ce rôle",
+            "Galdric l'a fait avec une <strong>une grande précision</strong>",
+            "L'intervention a tenu jusqu'au bout sans perdre la dynamique"
+          ]
+        },
+        {
+          h3: "🏆 La validation par l'infirmière scolaire",
+          items: [
+            "Le hasard avait fait que son groupe avait l'ordre : Maxime → Galdric/Loris → Paolo/moi",
+            "Son retour : <strong>« le meilleur enchaînement possible »</strong>",
+            "Parce qu'il fonctionnait <strong>en crescendo</strong> : du plus léger au plus intime",
+            "Notre atelier (le plus dense) arrivait quand les élèves étaient les plus en confiance"
+          ]
+        }
+      ]
+    },
+
+    analyse: {
+      title: "5 • Mon Analyse Personnelle",
+      subtitle: "Behind the scenes — La posture d'éducateur en santé",
+      sections: [
+        {
+          h3: "🎓 La posture pédagogique mobilisée",
+          items: [
+            "Approche <strong>socio-constructiviste</strong> (Vygotski)",
+            "<strong>Maïeutique socratique</strong> : faire émerger la réponse par le questionnement",
+            "<strong>Étayage</strong> (Bruner) : juste assez d'aide pour faire avancer l'élève",
+            "Utilisation du <strong>conflit sociocognitif</strong> : laisser le débat avancer la classe",
+            "Exemple concret : à « pas de réponse = oui », je relançais « Et si la personne a peur ? »"
+          ]
+        },
+        {
+          h3: "👥 Ma relation au public",
+          items: [
+            "Stress avant l'intervention : <strong>pas du public</strong> (BAFA → habitude), mais de <strong>ne pas savoir répondre</strong>",
+            "Logique d'<strong>empowerment</strong> : l'objectif n'est pas que je sache tout, c'est que les élèves augmentent leur pouvoir d'agir",
+            "<strong>Moment de bascule</strong> : fin du premier atelier → « je n'ai pas besoin de savoir, j'ai besoin de questionner »",
+            "Passage de la <strong>posture haute</strong> (sachant) à la <strong>posture basse</strong> (facilitateur)"
+          ]
+        },
+        {
+          h3: "🤝 Ma relation à mon binôme et à l'équipe",
+          items: [
+            "<strong>Avec Paolo</strong> : excellente entente, complémentarité réelle",
+            "Léger ressenti d'avoir parlé un peu plus que lui (sûrement lié à l'aisance BAFA) → vigilance future",
+            "<strong>Dans l'équipe</strong> : redistribution du rôle de Loris à Galdric, sans conflit, dans la <strong>coopération</strong>",
+            "Compétence transférable au service infirmier : redistribuer en équipe sans drame"
+          ]
+        },
+        {
+          h3: "🪑 Mon investissement de l'espace didactique",
+          items: [
+            "Évolution posturale sur les 3 rotations : <strong>debout → mi-assis → complètement assis</strong>",
+            "Décision implicite à rendre consciente",
+            "Être debout = <strong>asymétrie verticale d'autorité</strong>",
+            "S'asseoir = <strong>position adulte-adulte</strong>, parole horizontale, climat de confiance",
+            "Particulièrement important sur un sujet aussi intime"
+          ]
+        },
+        {
+          h3: "🛠️ Mes 4 outils de transmission (posture rogérienne)",
+          items: [
+            "<strong>Écoute active</strong> : laisser un silence avant de réagir",
+            "<strong>Reformulation</strong> : « Si je comprends bien, ce que tu dis, c'est que… »",
+            "<strong>Questionnement ouvert</strong> : « Qu'est-ce que tu en penses ? » au lieu de « Tu es d'accord ? »",
+            "<strong>« Gratter » les questions</strong> : « Pourquoi tu dis ça ? Qu'est-ce qui te fait penser ça ? »",
+            "Les 3 piliers de Rogers : empathie • congruence • considération positive inconditionnelle"
+          ]
+        },
+        {
+          h3: "📈 Mes 4 axes d'amélioration",
+          items: [
+            "<strong>1. Anticiper le matériel</strong> : câble, rallonge, clé USB en secours",
+            "<strong>2. Équilibrer les prises de parole en binôme</strong>",
+            "<strong>3. Inclure les élèves en retrait</strong> par l'écrit, le binôme, le « think-pair-share »",
+            "<strong>4. Conscience posturale</strong> : choisir consciemment ma posture corporelle"
+          ]
+        },
+        {
+          h3: "💡 Ce que cette intervention m'a appris sur moi",
+          items: [
+            "Je peux ne pas tout savoir, et ce n'est pas grave → je suis un <strong>passeur</strong>",
+            "La <strong>posture basse</strong> est plus puissante que la posture haute",
+            "Les compétences mobilisées au lycée Maillol = celles que j'utiliserai chaque jour en service infirmier",
+            "L'<strong>alliance éducative</strong> = la <strong>relation soignant-soigné</strong>"
+          ],
+          quote: "Je ne m'entraînais pas seulement à animer un atelier. Je m'entraînais à devenir infirmier."
+        }
+      ]
+    },
+
+    devinette: {
+      title: "6 • Devinette Finale",
+      subtitle: "Pour finir sur une dernière question…",
+      isRiddle: true
+    }
+  };
+
+  const visited = new Set();
+  let visitedCount = 0;
+
+  function openModal(key, branchNum) {
+    const data = content[key];
+    const modal = document.getElementById('modal');
+    const modalContent = document.getElementById('modalContent');
+
+    if (branchNum) modal.setAttribute('data-branch', branchNum);
+    else modal.removeAttribute('data-branch');
+
+    if (data.isRiddle) {
+      modalContent.innerHTML = `
+        <h2>${data.title}</h2>
+        <p class="subtitle">${data.subtitle}</p>
+        <div class="riddle-content">
+          <div class="riddle-question">
+            Je suis un mot de <strong>six lettres</strong>.<br>
+            Sans moi, l'éducateur n'éduque pas.<br>
+            Sans moi, le soignant ne soigne pas.<br>
+            Sans moi, l'ami ne respecte pas.<br>
+            <em>Je suis ce qui transforme un monologue en relation.</em><br><br>
+            <strong>Qui suis-je ?</strong>
+          </div>
+          <button class="riddle-reveal-btn" onclick="revealRiddle()">Révéler la réponse</button>
+          <div class="riddle-answer" id="riddleAnswer">
+            <div class="riddle-word">ÉCOUTE</div>
+            <p class="riddle-final">
+              Parce que si je devais retenir une seule chose de mon Service Sanitaire, ce serait celle-là : <strong>éduquer, ce n'est pas parler — c'est écouter</strong>.
+              <br><br>
+              Et c'est ce que je veux emmener avec moi en service de soins.
+              <span class="merci">MERCI</span>
+            </p>
+          </div>
+        </div>
+      `;
+    } else {
+      let html = `<h2>${data.title}</h2>`;
+      if (data.subtitle) html += `<p class="subtitle">${data.subtitle}</p>`;
+      data.sections.forEach(section => {
+        html += `<div class="modal-section"><h3>${section.h3}</h3>`;
+        if (section.items && section.items.length > 0) {
+          html += '<ul>';
+          section.items.forEach(item => { html += `<li>${item}</li>`; });
+          html += '</ul>';
+        }
+        if (section.quote) html += `<div class="quote">${section.quote}</div>`;
+        html += '</div>';
+      });
+      modalContent.innerHTML = html;
+    }
+
+    document.getElementById('modalOverlay').classList.add('active');
+
+    if (key !== 'center' && !visited.has(key)) {
+      visited.add(key);
+      const branchMap = { contexte: 'b1', diagnostic: 'b2', preparation: 'b3', jourj: 'b4', analyse: 'b5', devinette: 'b6' };
+      if (branchMap[key]) document.getElementById(branchMap[key]).classList.add('visited');
+      visitedCount++;
+      document.getElementById('progressBar').style.width = (visitedCount / 6 * 100) + '%';
+      document.getElementById('progressText').textContent = visitedCount + ' / 6 explorés';
+    }
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('active');
+  }
+
+  function revealRiddle() {
+    document.getElementById('riddleAnswer').classList.add('visible');
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+
+</body>
+</html>
